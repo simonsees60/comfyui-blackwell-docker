@@ -1,0 +1,29 @@
+# Additional Python Wheels
+# 
+# List wheel URLs here (one per line) for packages that need special versions
+# These are installed AFTER PyTorch but BEFORE custom node dependencies
+#
+# The most important wheel here is Nunchaku, which provides 4-bit quantization
+# support for massive speedups on Blackwell GPUs.
+#
+# Find the latest Nunchaku releases here:
+# https://github.com/nunchaku-ai/nunchaku/releases
+#
+# CRITICAL: The wheel filename must match your .env configuration:
+# - PyTorch version (e.g., torch2.11 for PyTorch 2.11.x)
+# - Python version from PYTHON_VERSION in .env (e.g., cp312 for Python 3.12)
+# - Platform: linux_x86_64 (standard Linux)
+#
+# Current example matches:
+# - PyTorch 2.11.x (torch2.11)
+# - Python 3.12 (cp312)
+# - Linux x86_64
+#
+# If you update PyTorch in .env, update this wheel URL to match!
+
+https://github.com/nunchaku-ai/nunchaku/releases/download/v1.2.0/nunchaku-1.2.0+torch2.11-cp312-cp312-linux_x86_64.whl
+
+# Add other wheels below as needed
+# Example: A custom build of a package
+# https://example.com/path/to/custom-package-1.0.0-cp312-cp312-linux_x86_64.whl
+# If you are struggling with this just ask your favourite AI to help.

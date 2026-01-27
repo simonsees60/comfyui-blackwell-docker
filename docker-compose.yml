@@ -1,0 +1,54 @@
+services:
+  comfyui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - CUDA_BASE_IMAGE=${CUDA_BASE_IMAGE:-nvidia/cuda:13.1.0-devel-ubuntu24.04}
+        - TORCH_WHEEL_URL=${TORCH_WHEEL_URL:-https://download.pytorch.org/whl/cu130/torch-2.10.0%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl}
+        - TORCHVISION_WHEEL_URL=${TORCHVISION_WHEEL_URL:-https://download.pytorch.org/whl/cu130/torchvision-0.25.0%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl}
+        - TORCHAUDIO_WHEEL_URL=${TORCHAUDIO_WHEEL_URL:-https://download.pytorch.org/whl/cu130/torchaudio-2.10.0%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl}
+        - COMFYUI_BRANCH=${COMFYUI_BRANCH:-master}
+        - SAGEATTENTION_VERSION=${SAGEATTENTION_VERSION:-2.2.0}
+    
+    container_name: comfyui
+    
+    ports:
+      - "${COMFYUI_PORT:-8188}:8188"
+    
+    volumes:
+      # Models - This will get large! Keep it on a drive with plenty of space
+      - ${MODELS_PATH:-./models}:/app/models
+      
+      # Generated outputs
+      - ${OUTPUT_PATH:-./output}:/app/output
+      
+      # Input images for img2img workflows
+      - ${INPUT_PATH:-./input}:/app/input
+      
+      # Custom nodes - IMPORTANT: Rebuild image after installing new nodes!
+      - ${CUSTOM_NODES_PATH:-./custom_nodes}:/app/custom_nodes
+      
+      # User settings and saved workflows
+      - ${USER_PATH:-./user}:/app/user
+    
+    environment:
+      # Helps with VRAM fragmentation - improves stability
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    
+    # Command line arguments for ComfyUI
+    # Customize in .env file via COMFYUI_ARGS and RESERVE_VRAM
+    command: >
+      python3 main.py --listen 0.0.0.0
+      ${COMFYUI_ARGS}
+      --reserve-vram ${RESERVE_VRAM:-1.5}
+    
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    
+    restart: unless-stopped

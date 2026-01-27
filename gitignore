@@ -1,0 +1,40 @@
+# Environment configuration
+.env
+
+# Generated directories (user data)
+models/
+output/
+input/
+custom_nodes/
+user/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
