@@ -24,7 +24,7 @@
 #
 # If you update PyTorch in .env, update this wheel URL to match!
 
-https://github.com/nunchaku-ai/nunchaku/releases/download/v1.2.0/nunchaku-1.2.0+torch2.11-cp312-cp312-linux_x86_64.whl
+https://github.com/nunchaku-ai/nunchaku/releases/download/v1.2.1/nunchaku-1.2.1+cu13.0torch2.10-cp312-cp312-linux_x86_64.whl
 
 # Add other wheels below as needed
 # Example: A custom build of a package
