@@ -54,10 +54,3 @@ RUN cd custom_nodes && \
 # Install ComfyUI-EulerDiscreteScheduler (recommended for Qwen)
 RUN cd custom_nodes && \
     git clone https://github.com/erosDiffusion/ComfyUI-EulerDiscreteScheduler.git
-
-# Install ComfyUI Manager (for experimentation)
-RUN cd custom_nodes && \
-    git clone https://github.com/ltdrdata/ComfyUI-Manager.git
-
-# Set working directory back to workspace root
-WORKDIR /workspace
