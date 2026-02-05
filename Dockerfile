@@ -3,8 +3,9 @@
 
 FROM runpod/comfyui:latest-5090
 
-# Ensure git is installed
-RUN apt-get update && apt-get install -y git
+# Ensure git is installed and create custom_nodes directory
+RUN apt-get update && apt-get install -y git && \
+    mkdir -p /workspace/ComfyUI/custom_nodes
 
 # Install cg-use-everywhere (Anything Everywhere, Prompts Everywhere)
 RUN cd /workspace/ComfyUI/custom_nodes && \
