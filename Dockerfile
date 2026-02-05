@@ -5,6 +5,7 @@ FROM runpod/comfyui:latest-5090
 
 # Switch to workspace directory where ComfyUI is installed
 WORKDIR /workspace/ComfyUI
+RUN apt-get update && apt-get install -y git
 
 # Install cg-use-everywhere (Anything Everywhere, Prompts Everywhere)
 RUN cd custom_nodes && \
