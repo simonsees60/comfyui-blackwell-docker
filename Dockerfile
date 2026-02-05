@@ -5,7 +5,9 @@ FROM runpod/comfyui:latest-5090
 
 # Switch to workspace directory where ComfyUI is installed
 WORKDIR /workspace/ComfyUI
-RUN apt-get update && apt-get install -y git
+
+# Ensure git is installed and custom_nodes directory exists
+RUN apt-get update && apt-get install -y git && mkdir -p custom_nodes
 
 # Install cg-use-everywhere (Anything Everywhere, Prompts Everywhere)
 RUN cd custom_nodes && \
@@ -59,35 +61,3 @@ RUN cd custom_nodes && \
 
 # Set working directory back to workspace root
 WORKDIR /workspace
-
-# Note: Models will download automatically on first run or add manually:
-# 
-# REQUIRED MODELS:
-# 
-# Diffusion Model:
-#   qwen_image_edit_2511_fp8_e4m3fn_scaled_lightning_comfyui.safetensors
-#   Location: models/diffusion_models/
-# 
-# LoRAs:
-#   Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors
-#   Qwen-Image-Edit-F2P.safetensors (rename from model.safetensors)
-#   Location: models/loras/
-# 
-# Text Encoder:
-#   qwen_2.5_vl_7b_fp8_scaled.safetensors
-#   Location: models/text_encoders/
-# 
-# VAE:
-#   qwen_image_vae.safetensors
-#   Location: models/vae/
-# 
-# Upscaler:
-#   4x-ClearRealityV1.pth
-#   Location: models/upscale_models/
-# 
-# Background Removal (auto-downloads):
-#   RMBG-2.0 model
-#   Location: models/RMBG/
-
-# The base image already has the correct entrypoint configured
-# It will start ComfyUI automatically when the container runs
