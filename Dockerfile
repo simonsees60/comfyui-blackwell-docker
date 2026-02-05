@@ -1,153 +1,92 @@
-# ComfyUI Docker Image with Blackwell NVFP4 Support
-# Optimized for NVIDIA Blackwell GPUs (RTX 50 series)
+# Simon's ComfyUI Docker - Qwen Face Swap Workflow Only
+# Extends RunPod's official 5090-optimized ComfyUI image
 
-# Build arguments for version pinning --Global Scope--
-ARG CUDA_BASE_IMAGE=nvidia/cuda:13.1.0-devel-ubuntu24.04
-ARG TORCH_WHEEL_URL=https://download.pytorch.org/whl/cu130/torch-2.10.0%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl
-ARG TORCHVISION_WHEEL_URL=https://download.pytorch.org/whl/cu130/torchvision-0.25.0%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl
-ARG TORCHAUDIO_WHEEL_URL=https://download.pytorch.org/whl/cu130/torchaudio-2.10.0%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl
-ARG COMFYUI_BRANCH=master
-ARG SAGEATTENTION_VERSION=v2
-ARG SAGEATTENTION_USE=1
-ARG TORCH_CUDA_ARCH_LIST=12.0
+FROM runpod/comfyui:latest-5090
 
-FROM ${CUDA_BASE_IMAGE}
-# Re-declaring these ARGs so they are available inside this build stage
-ARG SAGEATTENTION_VERSION
-ARG TORCH_WHEEL_URL
-ARG TORCHVISION_WHEEL_URL
-ARG TORCHAUDIO_WHEEL_URL
-ARG COMFYUI_BRANCH
-ARG TORCH_CUDA_ARCH_LIST
-# Pass these to the runtime
-ENV SAGEATTENTION_VERSION=${SAGEATTENTION_VERSION}
-ENV SAGEATTENTION_USE=${SAGEATTENTION_USE}
-ENV TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST}
-# Setup environment for non-interactive installs
-ENV DEBIAN_FRONTEND=noninteractive
-# Allow pip to install in system Python (we're in a container, it's fine)
-ENV PIP_BREAK_SYSTEM_PACKAGES=1
-ENV PIP_IGNORE_INSTALLED=1
-ENV PIP_NO_CACHE_DIR=1
+# Switch to workspace directory where ComfyUI is installed
+WORKDIR /workspace/ComfyUI
 
-# Install system dependencies
-# libgl1, libglib2.0-0: Required for OpenCV (used by many custom nodes)
-# ffmpeg: Video processing support
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    python3-dev \
-    git \
-    libgl1 \
-    libglib2.0-0 \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+# Install cg-use-everywhere (Anything Everywhere, Prompts Everywhere)
+RUN cd custom_nodes && \
+    git clone https://github.com/chrisgoringe/cg-use-everywhere.git
 
-# Upgrade pip to latest version
-RUN python3 -m pip install --upgrade pip
+# Install comfyui-easy-use (easy imageSize, easy seed)
+RUN cd custom_nodes && \
+    git clone https://github.com/yolain/ComfyUI-Easy-Use.git && \
+    cd ComfyUI-Easy-Use && \
+    pip install -r requirements.txt
 
-# Set working directory
-WORKDIR /app
+# Install ComfyUI-KJNodes (BlockifyMask, ImageAndMaskPreview, etc.)
+RUN cd custom_nodes && \
+    git clone https://github.com/kijai/ComfyUI-KJNodes.git && \
+    cd ComfyUI-KJNodes && \
+    pip install -r requirements.txt
 
-# Clone ComfyUI repository
-ARG COMFYUI_BRANCH
-RUN git clone --branch ${COMFYUI_BRANCH} https://github.com/comfyanonymous/ComfyUI.git .
+# Install comfyui-rmbg (background removal)
+RUN cd custom_nodes && \
+    git clone https://github.com/1038lab/comfyui-rmbg.git && \
+    cd comfyui-rmbg && \
+    pip install -r requirements.txt
 
-# Install PyTorch with CUDA 13.0 support
-# These specific wheels are critical for Blackwell GPU support
-# Use cache mount for the heavy PyTorch download
-RUN --mount=type=cache,target=/root/.cache/pip \
-    PIP_NO_CACHE_DIR=0 pip install \
-    "${TORCH_WHEEL_URL}" \
-    "${TORCHVISION_WHEEL_URL}" \
-    "${TORCHAUDIO_WHEEL_URL}"
+# Install comfyui_controlnet_aux (DWPreprocessor for depth)
+RUN cd custom_nodes && \
+    git clone https://github.com/Fannovel16/comfyui_controlnet_aux.git && \
+    cd comfyui_controlnet_aux && \
+    pip install -r requirements.txt
 
-# Create a constraints file to protect PyTorch versions
-# This prevents custom nodes from accidentally downgrading/upgrading PyTorch
-RUN echo "torch @ ${TORCH_WHEEL_URL}" > /app/constraints.txt && \
-    echo "torchvision @ ${TORCHVISION_WHEEL_URL}" >> /app/constraints.txt && \
-    echo "torchaudio @ ${TORCHAUDIO_WHEEL_URL}" >> /app/constraints.txt
+# Install comfyui_layerstyle (LayerColor, LayerMask nodes)
+RUN cd custom_nodes && \
+    git clone https://github.com/chflame163/ComfyUI_LayerStyle.git && \
+    cd ComfyUI_LayerStyle && \
+    pip install -r requirements.txt
 
-# Install SageAttention for improved attention mechanism performance
-# Triton is required for SageAttention's CUDA kernels
-RUN if [ "$SAGEATTENTION_VERSION" != "none" ]; then \
-      pip install triton -c /app/constraints.txt && \
-      git clone https://github.com/thu-ml/SageAttention.git /app/tmp/sageattention && \
-      if [ "$SAGEATTENTION_VERSION" = "v3" ]; then \
-        cd /app/tmp/sageattention/sageattention3_blackwell; \
-      elif [ "$SAGEATTENTION_VERSION" = "v2" ]; then \
-        cd /app/tmp/sageattention; \
-      else \
-        echo "ERROR: SAGEATTENTION_VERSION must be v2, v3 or none" && exit 1; \
-      fi && \
-      pip install --no-build-isolation -c /app/constraints.txt . && \
-      cd /app && \
-      rm -rf /app/tmp/sageattention; \
-    fi
+# Install masquerade-nodes (Cut By Mask)
+RUN cd custom_nodes && \
+    git clone https://github.com/BadCafeCode/masquerade-nodes-comfyui.git
 
-# Install base ComfyUI requirements
-RUN pip install -r requirements.txt -c /app/constraints.txt
+# Install rgthree-comfy (Image Comparer)
+RUN cd custom_nodes && \
+    git clone https://github.com/rgthree/rgthree-comfy.git
 
-# Install additional wheels from wheels.txt if provided
-# This is where Nunchaku and other special packages go
-# The wheels.txt file should be in the build context
-RUN --mount=type=bind,source=.,target=/mnt/context,ro \
-    if [ -f "/mnt/context/wheels.txt" ]; then \
-        echo "Found wheels.txt, installing wheels..."; \
-        while IFS= read -r wheel_url || [ -n "$wheel_url" ]; do \
-            # Skip comments and empty lines
-            case "$wheel_url" in \
-                \#*|"") continue ;; \
-            esac; \
-            echo "Installing: $wheel_url"; \
-            pip install "$wheel_url" -c /app/constraints.txt || true; \
-        done < /mnt/context/wheels.txt; \
-    else \
-        echo "No wheels.txt found, skipping additional wheels..."; \
-    fi
+# Install ComfyUI-EulerDiscreteScheduler (recommended for Qwen)
+RUN cd custom_nodes && \
+    git clone https://github.com/erosDiffusion/ComfyUI-EulerDiscreteScheduler.git
 
-# Install dependencies from custom nodes that are already present
-# This bakes in requirements for nodes you've already installed
-# NOTE: If you add nodes via ComfyUI Manager, you must rebuild!
-RUN --mount=type=bind,source=.,target=/mnt/context,ro \
-    if [ -d "/mnt/context/custom_nodes" ]; then \
-        echo "Installing custom node dependencies..."; \
-        find /mnt/context/custom_nodes -maxdepth 2 -name "requirements.txt" \
-        -exec pip install -r {} -c /app/constraints.txt \; || true; \
-    fi
+# Install ComfyUI Manager (for experimentation)
+RUN cd custom_nodes && \
+    git clone https://github.com/ltdrdata/ComfyUI-Manager.git
 
-# Create startup script that runs install.py for custom nodes
-# Some custom nodes need post-install setup that happens at runtime
-RUN echo '#!/bin/bash\n\
-set -e\n\
-\n\
-# Protect PyTorch versions from being changed\n\
-export PIP_CONSTRAINT=/app/constraints.txt\n\
-\n\
-# Run install.py scripts for any custom nodes that have them\n\
-if [ -d "/app/custom_nodes" ]; then\n\
-    for dir in /app/custom_nodes/*/; do\n\
-        if [ -f "$dir/install.py" ]; then\n\
-            echo "Running install script for $(basename $dir)..."\n\
-            cd "$dir" && python3 install.py || true\n\
-            cd /app\n\
-        fi\n\
-    done\n\
-fi\n\
-\n\
-echo "Starting ComfyUI..."\n\
-exec "$@"\n\
-' > /app/startup.sh && chmod +x /app/startup.sh
+# Set working directory back to workspace root
+WORKDIR /workspace
 
-# Expose ComfyUI web interface port
-EXPOSE 8188
+# Note: Models will download automatically on first run or add manually:
+# 
+# REQUIRED MODELS:
+# 
+# Diffusion Model:
+#   qwen_image_edit_2511_fp8_e4m3fn_scaled_lightning_comfyui.safetensors
+#   Location: models/diffusion_models/
+# 
+# LoRAs:
+#   Qwen-Image-Lightning-8steps-V2.0-bf16.safetensors
+#   Qwen-Image-Edit-F2P.safetensors (rename from model.safetensors)
+#   Location: models/loras/
+# 
+# Text Encoder:
+#   qwen_2.5_vl_7b_fp8_scaled.safetensors
+#   Location: models/text_encoders/
+# 
+# VAE:
+#   qwen_image_vae.safetensors
+#   Location: models/vae/
+# 
+# Upscaler:
+#   4x-ClearRealityV1.pth
+#   Location: models/upscale_models/
+# 
+# Background Removal (auto-downloads):
+#   RMBG-2.0 model
+#   Location: models/RMBG/
 
-# Use startup script as entrypoint
-ENTRYPOINT ["/app/startup.sh"]
-
-# Default command - can be overridden in docker-compose.yml
-CMD if [ "$SAGEATTENTION_USE" != "0" ] && { [ "$SAGEATTENTION_VERSION" = "v2" ] || [ "$SAGEATTENTION_VERSION" = "v3" ]; }; then \
-      exec python3 main.py --listen 0.0.0.0 --use-sage-attention; \
-    else \
-      exec python3 main.py --listen 0.0.0.0; \
-    fi
+# The base image already has the correct entrypoint configured
+# It will start ComfyUI automatically when the container runs
