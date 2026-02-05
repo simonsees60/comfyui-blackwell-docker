@@ -3,52 +3,49 @@
 
 FROM runpod/comfyui:latest-5090
 
-# Ensure git is installed and create custom_nodes directory
-RUN apt-get update && apt-get install -y git && \
-    mkdir -p /workspace/ComfyUI/custom_nodes
+# Ensure git is installed
+RUN apt-get update && apt-get install -y git
 
 # Install cg-use-everywhere (Anything Everywhere, Prompts Everywhere)
-RUN cd /workspace/ComfyUI/custom_nodes && \
+RUN cd /workspace/runpod-slim/ComfyUI/custom_nodes && \
     git clone https://github.com/chrisgoringe/cg-use-everywhere.git
 
 # Install comfyui-easy-use (easy imageSize, easy seed)
-RUN cd /workspace/ComfyUI/custom_nodes && \
+RUN cd /workspace/runpod-slim/ComfyUI/custom_nodes && \
     git clone https://github.com/yolain/ComfyUI-Easy-Use.git && \
     cd ComfyUI-Easy-Use && \
     pip install -r requirements.txt
 
-# Install ComfyUI-KJNodes (BlockifyMask, ImageAndMaskPreview, etc.)
-RUN cd /workspace/ComfyUI/custom_nodes && \
-    git clone https://github.com/kijai/ComfyUI-KJNodes.git && \
-    cd ComfyUI-KJNodes && \
-    pip install -r requirements.txt
+# ComfyUI-KJNodes is already in the base image, skip it
 
 # Install comfyui-rmbg (background removal)
-RUN cd /workspace/ComfyUI/custom_nodes && \
+RUN cd /workspace/runpod-slim/ComfyUI/custom_nodes && \
     git clone https://github.com/1038lab/comfyui-rmbg.git && \
     cd comfyui-rmbg && \
     pip install -r requirements.txt
 
 # Install comfyui_controlnet_aux (DWPreprocessor for depth)
-RUN cd /workspace/ComfyUI/custom_nodes && \
+RUN cd /workspace/runpod-slim/ComfyUI/custom_nodes && \
     git clone https://github.com/Fannovel16/comfyui_controlnet_aux.git && \
     cd comfyui_controlnet_aux && \
     pip install -r requirements.txt
 
 # Install comfyui_layerstyle (LayerColor, LayerMask nodes)
-RUN cd /workspace/ComfyUI/custom_nodes && \
+RUN cd /workspace/runpod-slim/ComfyUI/custom_nodes && \
     git clone https://github.com/chflame163/ComfyUI_LayerStyle.git && \
     cd ComfyUI_LayerStyle && \
     pip install -r requirements.txt
 
 # Install masquerade-nodes (Cut By Mask)
-RUN cd /workspace/ComfyUI/custom_nodes && \
+RUN cd /workspace/runpod-slim/ComfyUI/custom_nodes && \
     git clone https://github.com/BadCafeCode/masquerade-nodes-comfyui.git
 
 # Install rgthree-comfy (Image Comparer)
-RUN cd /workspace/ComfyUI/custom_nodes && \
+RUN cd /workspace/runpod-slim/ComfyUI/custom_nodes && \
     git clone https://github.com/rgthree/rgthree-comfy.git
 
 # Install ComfyUI-EulerDiscreteScheduler (recommended for Qwen)
-RUN cd /workspace/ComfyUI/custom_nodes && \
+RUN cd /workspace/runpod-slim/ComfyUI/custom_nodes && \
     git clone https://github.com/erosDiffusion/ComfyUI-EulerDiscreteScheduler.git
+
+# ComfyUI-Manager is already in the base image, skip it
